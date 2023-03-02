@@ -9,7 +9,7 @@
         <button @click="makeExa">点击生成例子</button>
     </div>
 
-    <div id="main" style="height:900px" class="main">
+    <div id="main" style="height:900px;width: 2000px;" class="main">
     </div>
 </template>
 
@@ -20,7 +20,8 @@ import { GraphChart } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
 
 echarts.use([TitleComponent, TooltipComponent, GraphChart, CanvasRenderer]);
-import { onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue';
+import { ElMessage } from 'element-plus';
 
 export default {
     setup() {
@@ -106,10 +107,10 @@ export default {
             // 向图中添加a和b两个顶点之间的边
             addEdge(a, b, weight) {
                 // 如果图中没有顶点a，先添加顶点a
-                    this.addVertex(a);
+                this.addVertex(a);
                 // 如果图中没有顶点b，先添加顶点b
-                    this.addVertex(b);
-                
+                this.addVertex(b);
+
                 //无向带权图的加边(对称矩阵)
                 this.adjList[a][b] = weight
                 this.adjList[b][a] = weight
@@ -121,6 +122,15 @@ export default {
                 return this.vertices;
             }
 
+            getMaxVertices(){
+                let max = 0;
+                for(let i = 0;i<this.vertices.length;i++){
+                    let cur = this.vertices[i];
+                    cur > max ? max = cur : null;
+                }
+                return max;
+            }
+
             // 获取图中的adjList
             getAdjList() {
                 return this.adjList;
@@ -128,8 +138,8 @@ export default {
 
             adjustAdjList() {
                 //对角处置零
-                for (let i = 0; i < this.vertices[this.vertices.length-1]; i++) {
-                    for (let j = 0; j <this.vertices[this.vertices.length-1]; j++) {
+                for (let i = 0; i < this.vertices[this.vertices.length - 1]; i++) {
+                    for (let j = 0; j < this.vertices[this.vertices.length - 1]; j++) {
                         if (i == j)
                             this.adjList[i][j] = 0;
                     }
@@ -137,7 +147,10 @@ export default {
             }
 
             adjustVertices() {
-                this.vertices.sort();
+                function func(a,b){
+                    return a- b;
+                }
+                this.vertices.sort(func);
             }
 
             toString() {
@@ -288,8 +301,16 @@ export default {
         //输入最小生成树的起点并执行
         let startvex = ref();
         const th = () => {
+            const open3 = () => {
+                ElMessage({
+                    showClose: true,
+                    message: '请输入正确起点',
+                    type: 'error',
+                })
+            }
             if (!graph.vertices.includes(Number(startvex.value))) {
-                alert("请输入正确的起点")
+
+                open3();
                 return;
             }
             graph.MiniSpanTree_Prim(startvex.value);
@@ -297,8 +318,27 @@ export default {
         }
         let a = ref(), b = ref(), weight = ref();
         const addedge = () => {
-            if(isNaN(Number(a.value)) ||isNaN(Number(b.value)) || isNaN(Number(weight.value)) ){
-                alert("请合法输入");
+            const open2 = () => {
+                ElMessage({
+                    showClose: true,
+                    message: '请合法输入',
+                    type: 'error',
+                })
+            }
+            if (isNaN(Number(a.value)) || isNaN(Number(b.value)) || isNaN(Number(weight.value))) {
+                open2();
+                return;
+            }
+            const open3 = () => {
+                ElMessage({
+                    showClose: true,
+                    message: '请依次递增输入顶点',
+                    type: 'error',
+                })
+            }
+            console.log(graph.getMaxVertices());
+            if(a.value > graph.getMaxVertices()+1 || b.value > graph.getMaxVertices()+1){
+                open3();
                 return;
             }
             graph.addEdge(Number(a.value), Number(b.value), Number(weight.value));
@@ -309,9 +349,6 @@ export default {
             option && myChart2.setOption(option);
         }
 
-        const editedge = () => {
-
-        }
 
         onMounted(() => {            //echarts的配置项
             var chartDom = document.getElementById('main');
@@ -319,7 +356,7 @@ export default {
             myChart2 = myChart;
             option && myChart.setOption(option);
         })
-        return { th, startvex, a, b, weight, addedge, editedge, makeExa }
+        return { th, startvex, a, b, weight, addedge, makeExa }
     },
 
 }
